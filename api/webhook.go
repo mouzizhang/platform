@@ -32,7 +32,7 @@ func InitWebhook() {
 	BaseRoutes.Hooks.Handle("/{id:[A-Za-z0-9]+}", ApiAppHandler(incomingWebhook)).Methods("POST")
 
 	// Old route. Remove eventually.
-	mr := Srv.Router
+	mr := app.Srv.Router
 	mr.Handle("/hooks/{id:[A-Za-z0-9]+}", ApiAppHandler(incomingWebhook)).Methods("POST")
 }
 
@@ -56,7 +56,7 @@ func createIncomingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cchan := Srv.Store.Channel().Get(hook.ChannelId)
+	cchan := app.Srv.Store.Channel().Get(hook.ChannelId)
 
 	hook.UserId = c.Session.UserId
 	hook.TeamId = c.TeamId
@@ -74,7 +74,7 @@ func createIncomingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Webhook().SaveIncoming(hook); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().SaveIncoming(hook); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -107,7 +107,7 @@ func deleteIncomingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Webhook().GetIncoming(id); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().GetIncoming(id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -118,7 +118,7 @@ func deleteIncomingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := (<-Srv.Store.Webhook().DeleteIncoming(id, model.GetMillis())).Err; err != nil {
+	if err := (<-app.Srv.Store.Webhook().DeleteIncoming(id, model.GetMillis())).Err; err != nil {
 		c.Err = err
 		return
 	}
@@ -140,7 +140,7 @@ func getIncomingHooks(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Webhook().GetIncomingByTeam(c.TeamId); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().GetIncomingByTeam(c.TeamId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -175,7 +175,7 @@ func createOutgoingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 	hook.TeamId = c.TeamId
 
 	if len(hook.ChannelId) != 0 {
-		cchan := Srv.Store.Channel().Get(hook.ChannelId)
+		cchan := app.Srv.Store.Channel().Get(hook.ChannelId)
 
 		var channel *model.Channel
 		if result := <-cchan; result.Err != nil {
@@ -201,7 +201,7 @@ func createOutgoingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Webhook().GetOutgoingByTeam(c.TeamId); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().GetOutgoingByTeam(c.TeamId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -218,7 +218,7 @@ func createOutgoingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if result := <-Srv.Store.Webhook().SaveOutgoing(hook); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().SaveOutgoing(hook); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -241,7 +241,7 @@ func getOutgoingHooks(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Webhook().GetOutgoingByTeam(c.TeamId); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().GetOutgoingByTeam(c.TeamId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -273,7 +273,7 @@ func deleteOutgoingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Webhook().GetOutgoing(id); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().GetOutgoing(id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -284,7 +284,7 @@ func deleteOutgoingHook(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := (<-Srv.Store.Webhook().DeleteOutgoing(id, model.GetMillis())).Err; err != nil {
+	if err := (<-app.Srv.Store.Webhook().DeleteOutgoing(id, model.GetMillis())).Err; err != nil {
 		c.Err = err
 		return
 	}
@@ -317,7 +317,7 @@ func regenOutgoingHookToken(c *Context, w http.ResponseWriter, r *http.Request) 
 	}
 
 	var hook *model.OutgoingWebhook
-	if result := <-Srv.Store.Webhook().GetOutgoing(id); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().GetOutgoing(id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -332,7 +332,7 @@ func regenOutgoingHookToken(c *Context, w http.ResponseWriter, r *http.Request) 
 
 	hook.Token = model.NewId()
 
-	if result := <-Srv.Store.Webhook().UpdateOutgoing(hook); result.Err != nil {
+	if result := <-app.Srv.Store.Webhook().UpdateOutgoing(hook); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -350,7 +350,7 @@ func incomingWebhook(c *Context, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
-	hchan := Srv.Store.Webhook().GetIncoming(id)
+	hchan := app.Srv.Store.Webhook().GetIncoming(id)
 
 	r.ParseForm()
 
@@ -435,7 +435,7 @@ func incomingWebhook(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	if len(channelName) != 0 {
 		if channelName[0] == '@' {
-			if result := <-Srv.Store.User().GetByUsername(channelName[1:]); result.Err != nil {
+			if result := <-app.Srv.Store.User().GetByUsername(channelName[1:]); result.Err != nil {
 				c.Err = model.NewLocAppError("incomingWebhook", "web.incoming_webhook.user.app_error", nil, "err="+result.Err.Message)
 				return
 			} else {
@@ -446,9 +446,9 @@ func incomingWebhook(c *Context, w http.ResponseWriter, r *http.Request) {
 			channelName = channelName[1:]
 		}
 
-		cchan = Srv.Store.Channel().GetByName(hook.TeamId, channelName)
+		cchan = app.Srv.Store.Channel().GetByName(hook.TeamId, channelName)
 	} else {
-		cchan = Srv.Store.Channel().Get(hook.ChannelId)
+		cchan = app.Srv.Store.Channel().Get(hook.ChannelId)
 	}
 
 	overrideUsername := parsedRequest.Username
@@ -456,7 +456,7 @@ func incomingWebhook(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	result := <-cchan
 	if result.Err != nil && result.Err.Id == store.MISSING_CHANNEL_ERROR && directUserId != "" {
-		newChanResult := <-Srv.Store.Channel().CreateDirectChannel(directUserId, hook.UserId)
+		newChanResult := <-app.Srv.Store.Channel().CreateDirectChannel(directUserId, hook.UserId)
 		if newChanResult.Err != nil {
 			c.Err = model.NewLocAppError("incomingWebhook", "web.incoming_webhook.channel.app_error", nil, "err="+newChanResult.Err.Message)
 			return

@@ -8,6 +8,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 	"github.com/gorilla/mux"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 )
@@ -35,7 +36,7 @@ func getMoreChannels(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Channel().GetMoreChannels(c.TeamId, c.Session.UserId, 0, 100000); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMoreChannels(c.TeamId, c.Session.UserId, 0, 100000); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else if HandleEtag(result.Data.(*model.ChannelList).Etag(), "Get More Channels (deprecated)", w, r) {
@@ -76,7 +77,7 @@ func updateLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	Srv.Store.Channel().UpdateLastViewedAt([]string{id}, c.Session.UserId)
+	app.Srv.Store.Channel().UpdateLastViewedAt([]string{id}, c.Session.UserId)
 
 	// Must be after update so that unread count is correct
 	if doClearPush {
@@ -97,7 +98,7 @@ func updateLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 		Value:    c.TeamId,
 	}
 
-	Srv.Store.Preference().Save(&model.Preferences{teamPref, chanPref})
+	app.Srv.Store.Preference().Save(&model.Preferences{teamPref, chanPref})
 
 	message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_CHANNEL_VIEWED, c.TeamId, "", c.Session.UserId, nil)
 	message.Add("channel_id", id)
@@ -116,7 +117,7 @@ func setLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 	data := model.StringInterfaceFromJson(r.Body)
 	newLastViewedAt := int64(data["last_viewed_at"].(float64))
 
-	Srv.Store.Channel().SetLastViewedAt(id, c.Session.UserId, newLastViewedAt)
+	app.Srv.Store.Channel().SetLastViewedAt(id, c.Session.UserId, newLastViewedAt)
 
 	chanPref := model.Preference{
 		UserId:   c.Session.UserId,
@@ -132,7 +133,7 @@ func setLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 		Value:    c.TeamId,
 	}
 
-	Srv.Store.Preference().Save(&model.Preferences{teamPref, chanPref})
+	app.Srv.Store.Preference().Save(&model.Preferences{teamPref, chanPref})
 
 	message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_CHANNEL_VIEWED, c.TeamId, "", c.Session.UserId, nil)
 	message.Add("channel_id", id)

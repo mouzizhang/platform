@@ -503,7 +503,7 @@ func sendPushNotification(post *model.Post, user *model.User, channel *model.Cha
 	}
 }
 
-func clearPushNotification(userId string, channelId string) {
+func ClearPushNotification(userId string, channelId string) {
 	sessions := getMobileAppSessions(userId)
 	if sessions == nil {
 		return
