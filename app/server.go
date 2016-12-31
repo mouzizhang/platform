@@ -1,7 +1,7 @@
 // Copyright (c) 2015 Mattermost, Inc. All Rights Reserved.
 // See License.txt for license information.
 
-package api
+package app
 
 import (
 	"crypto/tls"
@@ -23,9 +23,10 @@ import (
 )
 
 type Server struct {
-	Store          store.Store
-	Router         *mux.Router
-	GracefulServer *graceful.Server
+	Store           store.Store
+	WebSocketRouter *model.WebSocketRouter
+	Router          *mux.Router
+	GracefulServer  *graceful.Server
 }
 
 type CorsWrapper struct {
@@ -49,7 +50,7 @@ func InitStores() {
 type VaryBy struct{}
 
 func (m *VaryBy) Key(r *http.Request) string {
-	return GetIpAddress(r)
+	return utils.GetIpAddress(r)
 }
 
 func initalizeThrottledVaryBy() *throttled.VaryBy {
@@ -111,7 +112,7 @@ func StartServer() {
 			RateLimiter: rateLimiter,
 			VaryBy:      &VaryBy{},
 			DeniedHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				l4g.Error("%v: Denied due to throttling settings code=429 ip=%v", r.URL.Path, GetIpAddress(r))
+				l4g.Error("%v: Denied due to throttling settings code=429 ip=%v", r.URL.Path, utils.GetIpAddress(r))
 				throttled.DefaultDeniedHandler.ServeHTTP(w, r)
 			}),
 		}

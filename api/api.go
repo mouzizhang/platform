@@ -54,15 +54,14 @@ type Routes struct {
 	Emoji *mux.Router // 'api/v3/emoji'
 
 	Webrtc *mux.Router // 'api/v3/webrtc'
-
-	WebSocket *WebSocketRouter // websocket api
 }
 
 var BaseRoutes *Routes
 
 func InitRouter() {
-	app.app.Srv.Router = mux.NewRouter()
-	app.app.Srv.Router.NotFoundHandler = http.HandlerFunc(Handle404)
+	app.Srv.Router = mux.NewRouter()
+	app.Srv.Router.NotFoundHandler = http.HandlerFunc(Handle404)
+	app.Srv.WebSocketRouter = NewWebSocketRouter()
 }
 
 func InitApi() {
@@ -91,8 +90,6 @@ func InitApi() {
 	BaseRoutes.Public = BaseRoutes.ApiRoot.PathPrefix("/public").Subrouter()
 	BaseRoutes.Emoji = BaseRoutes.ApiRoot.PathPrefix("/emoji").Subrouter()
 	BaseRoutes.Webrtc = BaseRoutes.ApiRoot.PathPrefix("/webrtc").Subrouter()
-
-	BaseRoutes.WebSocket = NewWebSocketRouter()
 
 	InitUser()
 	InitTeam()

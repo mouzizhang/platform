@@ -117,7 +117,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := &Context{}
 	c.T, c.Locale = utils.GetTranslationsAndLocale(w, r)
 	c.RequestId = model.NewId()
-	c.IpAddress = GetIpAddress(r)
+	c.IpAddress = utils.GetIpAddress(r)
 	c.TeamId = mux.Vars(r)["team_id"]
 
 	token := ""
@@ -456,20 +456,6 @@ func IsApiCall(r *http.Request) bool {
 	return strings.Index(r.URL.Path, "/api/") == 0
 }
 
-func GetIpAddress(r *http.Request) string {
-	address := r.Header.Get(model.HEADER_FORWARDED)
-
-	if len(address) == 0 {
-		address = r.Header.Get(model.HEADER_REAL_IP)
-	}
-
-	if len(address) == 0 {
-		address, _, _ = net.SplitHostPort(r.RemoteAddr)
-	}
-
-	return address
-}
-
 func RenderWebError(err *model.AppError, w http.ResponseWriter, r *http.Request) {
 	T, _ := utils.GetTranslationsAndLocale(w, r)
 
@@ -500,7 +486,7 @@ func Handle404(w http.ResponseWriter, r *http.Request) {
 	err.Translate(utils.T)
 	err.StatusCode = http.StatusNotFound
 
-	l4g.Debug("%v: code=404 ip=%v", r.URL.Path, GetIpAddress(r))
+	l4g.Debug("%v: code=404 ip=%v", r.URL.Path, utils.GetIpAddress(r))
 
 	if IsApiCall(r) {
 		w.WriteHeader(err.StatusCode)

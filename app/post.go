@@ -96,7 +96,7 @@ func handlePostEvents(post *model.Post, teamId string, triggerWebhooks bool) {
 		channel = result.Data.(*model.Channel)
 	}
 
-	sendNotifications(c, post, team, channel)
+	sendNotifications(post, team, channel)
 
 	var user *model.User
 	if result := <-uchan; result.Err != nil {
@@ -107,11 +107,11 @@ func handlePostEvents(post *model.Post, teamId string, triggerWebhooks bool) {
 	}
 
 	if triggerWebhooks {
-		go handleWebhookEvents(c, post, team, channel, user)
+		go handleWebhookEvents(post, team, channel, user)
 	}
 
 	if channel.Type == model.CHANNEL_DIRECT {
-		go makeDirectChannelVisible(post.ChannelId)
+		go MakeDirectChannelVisible(post.ChannelId)
 	}
 }
 

@@ -1,13 +1,12 @@
 // Copyright (c) 2015 Mattermost, Inc. All Rights Reserved.
 // See License.txt for license information.
 
-package api
+package app
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
@@ -36,19 +35,19 @@ type WebConn struct {
 	LastAllChannelMembersTime int64
 }
 
-func NewWebConn(c *Context, ws *websocket.Conn) *WebConn {
-	if len(c.Session.UserId) > 0 {
-		go SetStatusOnline(c.Session.UserId, c.Session.Id, false)
+func NewWebConn(ws *websocket.Conn, session model.Session, t goi18n.TranslateFunc, locale string) *WebConn {
+	if len(session.UserId) > 0 {
+		go SetStatusOnline(session.UserId, session.Id, false)
 	}
 
 	return &WebConn{
 		Send:             make(chan model.WebSocketMessage, 256),
 		WebSocket:        ws,
-		UserId:           c.Session.UserId,
-		SessionToken:     c.Session.Token,
-		SessionExpiresAt: c.Session.ExpiresAt,
-		T:                c.T,
-		Locale:           c.Locale,
+		UserId:           session.UserId,
+		SessionToken:     session.Token,
+		SessionExpiresAt: session.ExpiresAt,
+		T:                t,
+		Locale:           locale,
 	}
 }
 
@@ -57,7 +56,7 @@ func (c *WebConn) readPump() {
 		HubUnregister(c)
 		c.WebSocket.Close()
 	}()
-	c.WebSocket.SetReadLimit(SOCKET_MAX_MESSAGE_SIZE_KB)
+	c.WebSocket.SetReadLimit(model.SOCKET_MAX_MESSAGE_SIZE_KB)
 	c.WebSocket.SetReadDeadline(time.Now().Add(PONG_WAIT))
 	c.WebSocket.SetPongHandler(func(string) error {
 		c.WebSocket.SetReadDeadline(time.Now().Add(PONG_WAIT))
@@ -201,7 +200,7 @@ func (webCon *WebConn) ShouldSendEvent(msg *model.WebSocketEvent) bool {
 
 		// Only broadcast typing messages if less than 1K people in channel
 		if msg.Event == model.WEBSOCKET_EVENT_TYPING {
-			if result := <-app.Srv.Store.Channel().GetMemberCount(msg.Broadcast.ChannelId, true); result.Err != nil {
+			if result := <-Srv.Store.Channel().GetMemberCount(msg.Broadcast.ChannelId, true); result.Err != nil {
 				l4g.Error("webhub.shouldSendEvent: " + result.Err.Error())
 				return false
 			} else {
@@ -217,7 +216,7 @@ func (webCon *WebConn) ShouldSendEvent(msg *model.WebSocketEvent) bool {
 		}
 
 		if webCon.AllChannelMembers == nil {
-			if result := <-app.Srv.Store.Channel().GetAllChannelMembersForUser(webCon.UserId, true); result.Err != nil {
+			if result := <-Srv.Store.Channel().GetAllChannelMembersForUser(webCon.UserId, true); result.Err != nil {
 				l4g.Error("webhub.shouldSendEvent: " + result.Err.Error())
 				return false
 			} else {

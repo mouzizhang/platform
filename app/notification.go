@@ -4,7 +4,20 @@
 package app
 
 import (
+	"crypto/tls"
+	"fmt"
+	"html"
+	"html/template"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
+
 	l4g "github.com/alecthomas/log4go"
+	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
 	"github.com/mattermost/platform/utils"
@@ -169,7 +182,7 @@ func sendNotifications(post *model.Post, team *model.Team, channel *model.Channe
 	// If the channel has more than 1K users then @channel is disabled
 	if channelNotification && int64(len(profileMap)) > *utils.Cfg.TeamSettings.MaxNotificationsPerChannel {
 		SendEphemeralPost(
-			teamId,
+			team.Id,
 			post.UserId,
 			&model.Post{
 				ChannelId: post.ChannelId,

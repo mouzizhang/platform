@@ -11,10 +11,6 @@ import (
 	"net/http"
 )
 
-const (
-	SOCKET_MAX_MESSAGE_SIZE_KB = 8 * 1024 // 8KB
-)
-
 func InitWebSocket() {
 	l4g.Debug(utils.T("api.web_socket.init.debug"))
 	BaseRoutes.Users.Handle("/websocket", ApiAppHandlerTrustRequester(connect)).Methods("GET")
@@ -23,8 +19,8 @@ func InitWebSocket() {
 
 func connect(c *Context, w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
-		ReadBufferSize:  SOCKET_MAX_MESSAGE_SIZE_KB,
-		WriteBufferSize: SOCKET_MAX_MESSAGE_SIZE_KB,
+		ReadBufferSize:  model.SOCKET_MAX_MESSAGE_SIZE_KB,
+		WriteBufferSize: model.SOCKET_MAX_MESSAGE_SIZE_KB,
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
